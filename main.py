@@ -1,3 +1,8 @@
+#python -m venv venv 
+#.\venv\scripts\activate.ps1
+#pip install pygame-ce
+
+
 import pygame
 pygame.init()
 
