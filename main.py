@@ -12,6 +12,21 @@ BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
 CASILLA = 60
 
+fuente = pygame.font.SysFont("segoeuisymbol", 48)
+
+
+piezas = [
+    ["♜","♞","♝","♛","♚","♝","♞","♜"],
+    ["♟","♟","♟","♟","♟","♟","♟","♟"],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["♙","♙","♙","♙","♙","♙","♙","♙"],
+    ["♖","♘","♗","♕","♔","♗","♘","♖"]
+]
+
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -28,5 +43,16 @@ while True:
                 pantalla,color,
                 (col * CASILLA, fila * CASILLA, CASILLA, CASILLA)
             )
+            # Dibujar piezas
+            pieza = piezas[fila][col]
+
+            if pieza != "":
+                texto = fuente.render(pieza, True, (255, 0, 0))
+
+                pantalla.blit(
+                    texto,
+                    (col * CASILLA + 10, fila * CASILLA + 5)
+                )
+
 
     pygame.display.update()
