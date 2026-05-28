@@ -1,0 +1,175 @@
+import pygame
+pygame.init()
+
+pantalla = pygame.display.set_mode((680, 750))
+
+GRIS = (200, 200, 200)
+NEGRO = (50, 50, 50)
+
+CASILLA = 85
+
+fuente = pygame.font.SysFont("segoeuisymbol", 65)
+fuente_turno = pygame.font.SysFont("arial", 35)
+
+piezas = [
+    ["♜","♞","♝","♛","♚","♝","♞","♜"],
+    ["♟","♟","♟","♟","♟","♟","♟","♟"],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["♙","♙","♙","♙","♙","♙","♙","♙"],
+    ["♖","♘","♗","♕","♔","♗","♘","♖"]
+]
+
+blancas = ["♔","♕","♖","♗","♘","♙"]
+negras = ["♚","♛","♜","♝","♞","♟"]
+
+turno_blancas = True
+contador = 0
+
+drag = None  # (fila, col, pieza)
+mouse_x, mouse_y = 0, 0
+
+
+def es_valida(pieza, f1, c1, f2, c2):
+
+    if f2 < 0 or f2 > 7 or c2 < 0 or c2 > 7:
+        return False
+
+    target = piezas[f2][c2]
+
+    if target != "":
+        if pieza in blancas and target in blancas:
+            return False
+        if pieza in negras and target in negras:
+            return False
+
+    df = f2 - f1
+    dc = c2 - c1
+
+    # PEONES simples
+    if pieza == "♙":
+        return df == -1 and dc == 0 and target == ""
+
+    if pieza == "♟":
+        return df == 1 and dc == 0 and target == ""
+
+    # TORRES
+    if pieza in ["♖","♜"]:
+        return f1 == f2 or c1 == c2
+
+    # ALFILES
+    if pieza in ["♗","♝"]:
+        return abs(df) == abs(dc)
+
+    # REINA
+    if pieza in ["♕","♛"]:
+        return f1 == f2 or c1 == c2 or abs(df) == abs(dc)
+
+    # REY
+    if pieza in ["♔","♚"]:
+        return abs(df) <= 1 and abs(dc) <= 1
+
+    # CABALLO
+    if pieza in ["♘","♞"]:
+        return (abs(df), abs(dc)) in [(2,1),(1,2)]
+
+    return False
+
+
+while True:
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    for event in pygame.event.get():
+
+        if event.type == pygame.QUIT:
+            pygame.quit()
+
+        # EMPEZAR A ARRASTRAR
+        if event.type == pygame.MOUSEBUTTONDOWN:
+
+            col = mouse_x // CASILLA
+            fila = (mouse_y - 60) // CASILLA
+
+            if 0 <= fila < 8 and 0 <= col < 8:
+
+                pieza = piezas[fila][col]
+
+                if pieza != "":
+                    if (turno_blancas and pieza in blancas) or (not turno_blancas and pieza in negras):
+                        drag = (fila, col, pieza)
+
+        # SOLTAR PIEZA
+        if event.type == pygame.MOUSEBUTTONUP and drag:
+
+            f1, c1, pieza = drag
+
+            col = mouse_x // CASILLA
+            fila = (mouse_y - 60) // CASILLA
+
+            if 0 <= fila < 8 and 0 <= col < 8:
+
+                if es_valida(pieza, f1, c1, fila, col):
+
+                    piezas[fila][col] = pieza
+                    piezas[f1][c1] = ""
+
+                    turno_blancas = not turno_blancas
+                    contador += 1
+
+            drag = None
+
+    # FONDO
+    pantalla.fill((240, 240, 240))
+
+    # TABLERO
+    for fila in range(8):
+        for col in range(8):
+
+            color = GRIS if (fila + col) % 2 == 0 else NEGRO
+
+            x = col * CASILLA
+            y = 60 + fila * CASILLA
+
+            pygame.draw.rect(pantalla, color, (x, y, CASILLA, CASILLA))
+
+            pieza = piezas[fila][col]
+
+            # NO dibujar pieza si la estás arrastrando
+            if drag and drag[0] == fila and drag[1] == col:
+                continue
+
+            if pieza != "":
+                color_pieza = (255,255,255) if pieza in blancas else (0,0,0)
+
+                texto = fuente.render(pieza, True, color_pieza)
+
+                pantalla.blit(texto, (x + 10, y + 5))
+
+    # PIEZA SIGUIENDO EL MOUSE
+    if drag:
+        _, _, pieza = drag
+
+        texto = fuente.render(pieza, True, (255,255,0))
+        pantalla.blit(texto, (mouse_x - 25, mouse_y - 25))
+
+    # TEXTO
+    fuente_t = fuente_turno.render(
+        f"Turno: {'Blancas' if turno_blancas else 'Negras'}",
+        True,
+        (0,0,0)
+    )
+
+    pantalla.blit(fuente_t, (20, 10))
+
+    fuente_c = fuente_turno.render(
+        f"Jugadas: {contador}",
+        True,
+        (0,0,0)
+    )
+
+    pantalla.blit(fuente_c, (450, 10))
+
+    pygame.display.update()
